@@ -17,6 +17,7 @@ async def proxy(request: Request, url: str = Query(...)):
     # クエリパラメータがすでに含まれている場合
     parsed_url = urlparse(target_url)
     original_query = dict(parse_qsl(parsed_url.query))
+    print(original_query)
 
     # クライアントリクエストのクエリパラメータを取得
     request_query = dict(request.query_params)
