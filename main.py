@@ -17,16 +17,12 @@ async def proxy(request: Request, url: str = Query(...)):
     # クエリパラメータがすでに含まれている場合
     parsed_url = urlparse(target_url)
     original_query = dict(parse_qsl(parsed_url.query))
-    print(original_query)
 
     # クライアントリクエストのクエリパラメータを取得
     request_query = dict(request.query_params)
-
-    # クエリパラメータをマージ（クライアントのものが優先）
-    merged_query = {**original_query, **request_query}
     
     # 新しいURLを再構築（?が最初に来るようにして&を追加）
-    target_url = urlunparse(parsed_url._replace(query=urlencode(merged_query)))
+    target_url = urlunparse(parsed_url._replace(query=urlencode(original_query)))
     print(target_url)
 
     # クライアントリクエストデータを収集
