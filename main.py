@@ -1,68 +1,45 @@
-from fastapi import FastAPI, Request, Response, HTTPException, Query
+from fastapi import FastAPI, Request, Response, Query
 import httpx
-from urllib.parse import unquote, urlencode, urlparse, parse_qsl, urlunparse
 
 app = FastAPI()
 
 
-@app.api_route("/", methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"])
-async def proxy(request: Request, url: str = Query(...)):
+@app.api_route(
+    "/{path:path}", methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"]
+)
+async def proxy(request: Request, path: str):
     """
-    リバースプロキシとしてリクエストを転送する
+    リクエストをリバースプロキシとして転送する
     """
-    # プロキシ対象の完全URLをデコード
-    target_url = unquote(url)
-    if not target_url.startswith(("http://", "https://")):
-        raise HTTPException(
-            status_code=400,
-            detail="Invalid URL format. Must start with http:// or https://",
-        )
-
-    # クエリパラメータがすでに含まれている場合
-    parsed_url = urlparse(target_url)
-    original_query = dict(parse_qsl(parsed_url.query))
-
-    # 新しいURLを再構築（?が最初に来るようにして&を追加）
-    target_url = urlunparse(parsed_url._replace(query=urlencode(original_query)))
-    print(target_url)
-
-    # クライアントリクエストデータを収集
+    # クライアントのリクエストデータを収集
     client_request_headers = dict(request.headers)
     client_request_body = await request.body()
 
-    # 転送しないヘッダーを削除
-    excluded_headers = [
-        "x-real-ip",
-        "x-forwarded-for",
-        "x-forwarded-proto",
-        "host",
-        "accept-encoding",
-    ]
-    for header in excluded_headers:
-        client_request_headers.pop(header, None)
+    # Remove problematic headers
+    client_request_headers.pop("x-real-ip", None)
+    client_request_headers.pop("x-forwarded-for", None)
+    client_request_headers.pop("x-forwarded-proto", None)
+    client_request_headers.pop("host", None)
+    client_request_headers.pop("accept-encoding", None)
 
-    # リモートサーバーにリクエストを転送
-    async with httpx.AsyncClient(verify=False) as client:
+    print(path)
+    print(request.query_params)
+
+    # httpx を使ってリモートサーバーにリクエストを転送
+    async with httpx.AsyncClient() as client:
         remote_response = await client.request(
             method=request.method,
-            url=target_url,
+            url=f"{path}{f'?{request.query_params}' if request.query_params != '' else ''}",
             headers=client_request_headers,
             content=client_request_body,
         )
 
-    # レスポンスデータを読み取り
-    response_content = remote_response.content
+    # Read the response content
+    data = await remote_response.aread()
 
-    # レスポンスヘッダーを収集
-    response_headers = {
-        key: value
-        for key, value in remote_response.headers.items()
-        if key.lower() != "transfer-encoding"
-    }
-
-    # レスポンスをクライアントに返却
+    # リモートサーバーからの応答をそのままクライアントに返却
     return Response(
-        content=response_content,
+        content=data,
         status_code=remote_response.status_code,
-        headers=response_headers,
+        headers=remote_response.headers,
     )
