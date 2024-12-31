@@ -24,7 +24,7 @@ async def proxy(request: Request, proxy_url: str):
         client_request_headers.pop(header, None)
 
     # リモートサーバーにリクエストを転送
-    async with httpx.AsyncClient() as client:
+    async with httpx.AsyncClient(verify=False) as client:
         remote_response = await client.request(
             method=request.method,
             url=target_url,
