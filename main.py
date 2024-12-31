@@ -27,6 +27,7 @@ async def proxy(request: Request, url: str = Query(...)):
     
     # 新しいURLを再構築（?が最初に来るようにして&を追加）
     target_url = urlunparse(parsed_url._replace(query=urlencode(merged_query)))
+    print(target_url)
 
     # クライアントリクエストデータを収集
     client_request_headers = dict(request.headers)
