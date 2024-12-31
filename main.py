@@ -4,13 +4,13 @@ from urllib.parse import unquote
 
 app = FastAPI()
 
-@app.api_route("/{proxy_url:path}", methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"])
-async def proxy(request: Request, proxy_url: str):
+@app.api_route("/", methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"])
+async def proxy(request: Request, url: str):
     """
     リバースプロキシとしてリクエストを転送する
     """
     # プロキシ対象の完全URLを取得
-    target_url = unquote(proxy_url)  # URLデコード
+    target_url = unquote(url)  # URLデコード
     if not (target_url.startswith("http://") or target_url.startswith("https://")):
         raise HTTPException(status_code=400, detail="Invalid URL format")
     
