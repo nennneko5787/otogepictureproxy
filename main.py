@@ -10,6 +10,8 @@ async def proxy(request: Request, url: str):
     """
     リクエストをリバースプロキシとして転送する
     """
+    print(url)
+    
     # クライアントのリクエストデータを収集
     client_request_headers = dict(request.headers)
     client_request_body = await request.body()
