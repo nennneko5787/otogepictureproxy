@@ -4,7 +4,7 @@ import httpx
 app = FastAPI()
 
 @app.api_route(
-    "{url:str}", methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"]
+    "{url:url}", methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"]
 )
 async def proxy(request: Request, url: str):
     """
