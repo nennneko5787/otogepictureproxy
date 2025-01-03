@@ -26,7 +26,7 @@ async def proxy(request: Request, path: str):
     print(request.query_params)
 
     # httpx を使ってリモートサーバーにリクエストを転送
-    async with httpx.AsyncClient() as client:
+    async with httpx.AsyncClient(verify=False) as client:
         remote_response = await client.request(
             method=request.method,
             url=f"{path}{f'?{request.query_params}' if request.query_params != '' else ''}",
